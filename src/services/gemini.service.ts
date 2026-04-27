@@ -43,8 +43,10 @@ export async function callGemini(
     try {
       parsed = JSON.parse(cleaned)
     } catch {
-      console.error(`Gemini parse failure [${chainType}]. Raw response:`, text)
-      throw { code: 'GEMINI_PARSE_ERROR', raw: text }
+      const finishReason = response.response.candidates?.[0]?.finishReason || 'UNKNOWN'
+      import('fs').then(fs => fs.writeFileSync(`failed-gemini-response-${chainType}.txt`, text))
+      console.error(`Gemini parse failure [${chainType}]. FinishReason: ${finishReason}. Snippet:`, text.slice(0, 200))
+      throw { code: 'GEMINI_PARSE_ERROR', raw: text, finishReason }
     }
 
     if (ttlMs > 0) {
