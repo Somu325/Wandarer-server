@@ -3,6 +3,7 @@ import type { Request, Response } from 'express'
 import cors from 'cors'
 import { connectDB } from './config/db.js'
 import rateLimiter from './middleware/rateLimiter.js'
+import { requestLogger } from './middleware/logger.js'
 import profileRoutes from './routes/profile.routes.js'
 import jobRoutes from './routes/jobs.routes.js'
 import freelanceRoutes from './routes/freelance.routes.js'
@@ -17,6 +18,7 @@ const app = express()
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }))
 app.use(express.json())
+app.use(requestLogger)
 app.use('/api', rateLimiter)
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
