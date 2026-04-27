@@ -6,11 +6,11 @@ import { callGemini } from '../services/gemini.service.js'
 import { buildJobScorePrompt } from '../prompts/jobScore.prompt.js'
 import type { IJob } from '../models/Job.model.js'
 
-const BATCH = 20
+const BATCH = 5
 const JOB_SCORE_TTL = 21_600_000
 
 /**
- * Shared helper — scores a list of jobs in batches of 20 against the current profile context.
+ * Shared helper — scores a list of jobs in batches of 5 against the current profile context.
  * Updates each job in MongoDB with matchScore, matchReason, missingSkills, verdict.
  * @returns number of jobs scored
  */
