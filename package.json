@@ -1,10 +1,11 @@
 {
   "name": "wanderer-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Personal Job & Freelance Intelligence App",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
@@ -12,19 +13,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.15.2",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "mongoose": "^9.5.0",
-    "node-cron": "^4.2.1"
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "mongoose": "^8.9.5",
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/mongoose": "^5.11.96",
-    "@types/node": "^25.6.0",
-    "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.17.16",
+    "@types/node-cron": "^3.0.11",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.3"
   }
 }

@@ -1,0 +1,248 @@
+# AGENTS.md
+# Cross-tool rules — Antigravity, Cursor, Claude Code
+# Personal Job & Freelance Intelligence App
+
+---
+
+## PROJECT IDENTITY
+
+A personal, single-user job and freelance finder for one software engineer
+in Hyderabad, India. Not a product. Not SaaS. One person uses this forever.
+
+Stack: Node.js 20 + Express + MongoDB + Gemini 1.5 Flash
+Language: TypeScript only (.ts files)
+Database: MongoDB local — mongodb://localhost:27017/jobsearch
+Server port: 5000
+
+---
+
+## ABSOLUTE RULES — NEVER BREAK THESE
+
+- TypeScript only. No .js files. Ever.
+- strict: true in tsconfig.json — no implicit any, ever.
+- No authentication. No JWT. No bcrypt. No sessions. No passport.
+- No user collection. No login. No registration.
+- Do not create any folder or file outside the exact structure below.
+- Do not install packages not listed in this document.
+- Use ESM imports (import/export) — not CommonJS require().
+- After completing ANY task, update PROJECT_STATE.md immediately.
+
+---
+
+## EXACT FOLDER STRUCTURE — DO NOT DEVIATE
+
+```
+server/
+├── config/
+│   ├── db.ts
+│   └── gemini.ts
+├── models/
+│   ├── Profile.model.ts
+│   ├── Job.model.ts
+│   ├── Bookmark.model.ts
+│   └── Search.model.ts
+├── routes/
+│   ├── profile.routes.ts
+│   ├── jobs.routes.ts
+│   ├── freelance.routes.ts
+│   ├── resume.routes.ts
+│   └── assistant.routes.ts
+├── services/
+│   ├── gemini.service.ts
+│   ├── jobFetch.service.ts
+│   ├── cache.service.ts
+│   └── context.service.ts
+├── prompts/
+│   ├── master.prompt.ts
+│   ├── jobScore.prompt.ts
+│   ├── gigIdeas.prompt.ts
+│   ├── rateEstimate.prompt.ts
+│   ├── bulletRewrite.prompt.ts
+│   └── coverLetter.prompt.ts
+├── middleware/
+│   └── rateLimiter.ts
+├── jobs/
+│   └── feedRefresh.cron.ts
+└── index.ts
+
+.env              (root level)
+AGENTS.md         (root level)
+GEMINI.md         (root level)
+PROJECT_STATE.md  (root level)
+tsconfig.json     (root level)
+package.json      (root level)
+```
+
+No new files. No new folders. Work only within this structure.
+
+---
+
+## ALLOWED PACKAGES
+
+### Runtime
+```
+express
+mongoose
+@google/generative-ai
+express-rate-limit
+node-cron
+dotenv
+cors
+axios
+```
+
+### Dev only
+```
+typescript
+ts-node-dev
+@types/express
+@types/node
+@types/cors
+@types/node-cron
+```
+
+crypto is built-in to Node 20 — do not install it.
+No other packages without explicitly asking first.
+
+---
+
+## TYPESCRIPT STANDARDS
+
+- All interfaces prefixed with I — IProfile, IJob, IBookmark, IAiCache
+- interface for object shapes. type for unions and aliases only.
+- No any — use unknown and narrow it, or define the proper interface
+- Every exported function must have a JSDoc comment with @param and @returns
+- Shared interfaces defined in their respective model files — no separate types/ folder
+
+---
+
+## CODE STANDARDS
+
+- async/await everywhere — no .then().catch() chains
+- Every async route handler and service function wrapped in try/catch
+- console.log for info, console.error for errors — no logging library
+- 2-space indentation
+- Single quotes for strings
+- No semicolons
+
+---
+
+## API RESPONSE SHAPE — ALWAYS THIS, NO EXCEPTIONS
+
+```typescript
+// Success
+{ success: true, data: T }
+
+// Error
+{ success: false, error: { code: string, message: string } }
+```
+
+HTTP codes: 200 success, 201 created, 400 bad input,
+404 not found, 429 rate limited, 500 server error.
+Never expose raw Mongoose errors or Gemini SDK errors to the client.
+
+---
+
+## MONGODB — KEY RULES
+
+Profile is a singleton. Always use:
+Profile.findOneAndUpdate({}, payload, { upsert: true, new: true })
+The empty {} filter is intentional — always matches the one doc.
+
+TTL indexes — create both once on DB connect in db.ts:
+- jobs:      { fetchedAt: 1 },   { expireAfterSeconds: 21600 }   // 6h
+- searches:  { computedAt: 1 },  { expireAfterSeconds: 86400 }   // 24h
+
+Bookmarks must store title, company, externalUrl directly on the document —
+not just a jobRef — because jobs expire every 6h and get deleted.
+Always denormalize these fields so the tracker never breaks.
+
+---
+
+## GEMINI — KEY RULES
+
+- Model: gemini-1.5-flash only. Never use pro, ultra, or any other model.
+- Temperature: 0.3 — non-negotiable, keeps JSON output consistent
+- maxOutputTokens: 2048
+- All Gemini calls go through gemini.service.ts only
+- Never call the Gemini SDK directly from a route file
+- Strip ```json fences before JSON.parse — Gemini sometimes adds them anyway
+- On JSON.parse failure: log the raw string, throw { code: 'GEMINI_PARSE_ERROR', raw }
+- Never crash the process on a Gemini parse failure
+
+---
+
+## CACHE — KEY RULES
+
+Cache key = SHA256(chainType + JSON.stringify(inputs))
+Check Search collection before every single Gemini call.
+Enforce TTL in code by checking computedAt age in milliseconds:
+- context:  1h  — 3_600_000 ms
+- jobScore: 6h  — 21_600_000 ms
+- gigIdeas: 24h — 86_400_000 ms
+- rates:    24h — 86_400_000 ms
+
+---
+
+## ENVIRONMENT VARIABLES
+
+```
+GEMINI_API_KEY
+GEMINI_MODEL=gemini-1.5-flash
+MONGO_URI=mongodb://localhost:27017/jobsearch
+PORT=5000
+CACHE_TTL_JOBS=21600
+CACHE_TTL_GIGS=86400
+CACHE_TTL_RATES=86400
+```
+
+On startup: validate all vars are present.
+If any is missing — log exactly which one and exit the process.
+Never continue with undefined environment variables.
+
+---
+
+## EXTERNAL DATA SOURCES
+
+Remotive:   GET https://remotive.com/api/remote-jobs?category=software-dev&limit=50
+Arbeit Now: GET https://www.arbeitnow.com/api/job-board-api
+Both are free. No API keys needed.
+
+Remotive field mapping to IJob:
+  id                         → externalId (prefix with 'remotive_')
+  url                        → url
+  title                      → title
+  company_name               → company
+  company_logo               → companyLogo
+  description                → description
+  tags                       → tags
+  salary                     → salary
+  candidate_required_location → location
+  publication_date           → postedAt
+  source                     → 'remotive'
+  isRemote                   → true (always for Remotive)
+
+Arbeit Now field mapping to IJob:
+  slug         → externalId (prefix with 'arbeitnow_')
+  url          → url
+  title        → title
+  company_name → company
+  description  → description
+  tags         → tags
+  location     → location
+  remote       → isRemote
+  created_at   → postedAt
+  source       → 'arbeitnow'
+
+Dedup strategy: Job.bulkWrite() with updateOne + filter on externalId + upsert: true
+
+---
+
+## AFTER EVERY COMPLETED TASK — MANDATORY
+
+Open PROJECT_STATE.md and:
+1. Mark the completed file as done with today's date
+2. Write one line describing what was built
+3. Update the Next Up section with what comes next
+
+Do not skip this. Every agent task ends with a PROJECT_STATE.md update.
