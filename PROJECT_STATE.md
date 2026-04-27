@@ -18,8 +18,8 @@ Phase 1 — Backend: COMPLETE ✅ — controllers split done, profile seeded
 Phase 2 — Frontend: NOT STARTED
 
 ## GEMINI MODEL NOTE
-gemini-1.5-flash is no longer available on v1beta API.
-Active model: gemini-2.0-flash-lite (set in .env).
+gemini-1.5-flash and gemini-2.0-flash-lite are no longer available.
+Active model: gemini-2.5-flash (set in .env).
 API key free-tier quota resets daily — step 8 (context) works when quota is fresh.
 
 ## PROFILE
