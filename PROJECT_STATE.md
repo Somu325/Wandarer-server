@@ -160,3 +160,4 @@ Agents append an entry here after every task. Format:
 [2026-04-27] [tsconfig.json, package.json] — Foundation setup: ESM, strict mode, and exact dependency stack.
 [2026-04-27] [.env, config/db.ts, config/gemini.ts] — Configured environment variables, MongoDB connection with retry logic, and Gemini SDK initialization.
 [2026-04-27] [models/] — Implemented Profile, Job, Bookmark, and Search (AiCache) models with strict typing and project rules.
+[2026-04-27] [.agents/skills/] — Populated agent skill files (update_state, write_api_route, gemini_integration, database_rules, typescript_standards).
