@@ -1,7 +1,4 @@
 import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-
-dotenv.config()
 
 /**
  * Connects to MongoDB with retry logic and initializes TTL indexes
@@ -19,21 +16,22 @@ export const connectDB = async (): Promise<void> => {
   while (attempts > 0) {
     try {
       await mongoose.connect(mongoUri)
-      console.log('MongoDB connected successfully')
-      
-      // Initialize TTL indexes as required by AGENTS.md
+      console.log('MongoDB connected: jobsearch')
+
+      // Initialize TTL indexes — created once on connect, not in model files
       const db = mongoose.connection.db
       if (db) {
         await db.collection('jobs').createIndex(
           { fetchedAt: 1 },
           { expireAfterSeconds: Number(process.env.CACHE_TTL_JOBS) || 21600 }
         )
-        
-        await db.collection('searches').createIndex(
+
+        // Search.model.ts uses collection 'ai_cache' — TTL must match
+        await db.collection('ai_cache').createIndex(
           { computedAt: 1 },
           { expireAfterSeconds: Number(process.env.CACHE_TTL_GIGS) || 86400 }
         )
-        
+
         console.log('TTL indexes initialized')
       }
       
