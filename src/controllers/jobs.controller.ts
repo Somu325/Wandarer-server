@@ -14,7 +14,7 @@ const JOB_SCORE_TTL = 21_600_000
  * Updates each job in MongoDB with matchScore, matchReason, missingSkills, verdict.
  * @returns number of jobs scored
  */
-async function scoreBatched(jobs: IJob[], contextString: string): Promise<number> {
+export async function scoreBatched(jobs: IJob[], contextString: string): Promise<number> {
   let scored = 0
   for (let i = 0; i < jobs.length; i += BATCH) {
     const batch = jobs.slice(i, i + BATCH)
